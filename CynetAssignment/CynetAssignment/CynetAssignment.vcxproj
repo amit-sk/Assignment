@@ -76,10 +76,12 @@
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Process.cpp" />
     <ClCompile Include="ProcManager.cpp" />
     <ClCompile Include="SignalHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Process.hpp" />
     <ClInclude Include="ProcManager.hpp" />
     <ClInclude Include="SignalHandler.hpp" />
   </ItemGroup>
