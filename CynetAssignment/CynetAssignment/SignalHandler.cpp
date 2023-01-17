@@ -9,3 +9,4 @@ void SignalHandler::RegisterRequiredSignals()
 {
     // TODO (ASK)
 }
+

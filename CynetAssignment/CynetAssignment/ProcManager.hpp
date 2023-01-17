@@ -15,8 +15,6 @@ public:
     void run();
 
 private:
-    static bool isNumber(const std::string& s);
-
     void RefreshProcessList();
     void PrintProcess(); // TODO (ASK): move to process
     void CheckIfToStop();
