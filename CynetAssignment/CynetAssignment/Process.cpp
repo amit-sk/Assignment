@@ -12,10 +12,7 @@ Process::Process(uint16_t pid) :
     _parent_id(get_parent_id(pid)),
     _grandparent_id(get_parent_id(_parent_id)),
     _command_line(StringUtils::read_from_file(get_process_cmdline_file_path(pid), 0x200000)),
-    _file_name(),
-    _file_path(get_file_path(pid)),
-    _file_size(),
-    _file_inode(),
+    _file_data(get_file_path(pid)),
     _virtual_memory_size(),
     _uid(),
     _open_fds_count()
@@ -28,8 +25,11 @@ std::string Process::Serialize() const
     return "PID " + std::to_string(_id) +
         " PPID " + std::to_string(_parent_id) +
         " PPPID " + std::to_string(_grandparent_id) +
-        " cmdline: " + _command_line +
-        " file path " + std::string(_file_path);
+        " cmdline (" + _command_line +
+        ") file path (" + std::string(_file_data.path) +
+        ") file name (" + _file_data.file_name +
+        ") file size " + std::to_string(_file_data.size) +
+        " file inode " + std::to_string(_file_data.inode);
 }
 
 std::filesystem::path Process::get_process_stat_file_path(uint16_t process_id)

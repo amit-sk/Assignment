@@ -4,6 +4,8 @@
 #include <string>
 #include <filesystem>
 
+#include "File.hpp"
+
 class Process
 {
 public:
@@ -30,10 +32,7 @@ private:
     uint16_t _parent_id;
     uint16_t _grandparent_id;
     std::string _command_line;
-    std::string _file_name;  // TODO (ASK) consider grouping file properties under file class
-    std::filesystem::path _file_path;
-    uint64_t _file_size;
-    uint32_t _file_inode;
+    File _file_data;
     uint64_t _virtual_memory_size;
     uint32_t _uid;
     uint16_t _open_fds_count;

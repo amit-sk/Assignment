@@ -75,6 +75,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClCompile Include="File.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="ProcManager.cpp" />
@@ -82,6 +83,7 @@
     <ClCompile Include="StringUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="File.hpp" />
     <ClInclude Include="Process.hpp" />
     <ClInclude Include="ProcManager.hpp" />
     <ClInclude Include="SignalHandler.hpp" />
