@@ -15,7 +15,7 @@ Process::Process(uint16_t pid) :
     _file_data(get_file_path(pid)),
     _virtual_memory_size_in_bytes(get_process_virtual_memory_size(pid)),
     _uid(get_process_uid(pid)),
-    _open_fds_count()
+    _open_fds_count(get_open_fds_count(pid))
 {}
 
 std::string Process::Serialize() const
@@ -29,7 +29,8 @@ std::string Process::Serialize() const
         ") file size " + std::to_string(_file_data.size) +
         " file inode " + std::to_string(_file_data.inode) +
         " vsize " + std::to_string(_virtual_memory_size_in_bytes) +
-        " uid " + std::to_string(_uid);
+        " uid " + std::to_string(_uid) +
+        " open fds count " + std::to_string(_open_fds_count);
 }
 
 std::filesystem::path Process::get_process_stat_file_path(uint16_t process_id)
@@ -50,6 +51,11 @@ std::filesystem::path Process::get_process_cmdline_file_path(uint16_t process_id
 std::filesystem::path Process::get_process_exe_file_path(uint16_t process_id)
 {
     return std::filesystem::path("/proc") / std::to_string(process_id) / "exe";
+}
+
+std::filesystem::path Process::get_process_fd_dir_path(uint16_t process_id)
+{
+    return std::filesystem::path("/proc") / std::to_string(process_id) / "fdinfo";
 }
 
 uint16_t Process::get_parent_id(uint16_t process_id)
@@ -117,5 +123,15 @@ uint32_t Process::get_process_uid(uint16_t process_id)
     // index 1 in the line is the REAL UID of the process - see man proc
     assert(uid_info.size() >= 2);
     return std::stoi(uid_info.at(1));
+}
+
+uint16_t Process::get_open_fds_count(uint16_t process_id)
+{
+    uint16_t count = 0;
+    for (auto& _ : std::filesystem::directory_iterator{ get_process_fd_dir_path(process_id) })
+    {
+        count++;
+    }
+    return count;
 }
 
