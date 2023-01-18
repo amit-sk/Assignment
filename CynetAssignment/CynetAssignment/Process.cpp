@@ -13,12 +13,10 @@ Process::Process(uint16_t pid) :
     _grandparent_id(get_parent_id(_parent_id)),
     _command_line(StringUtils::read_from_file(get_process_cmdline_file_path(pid), 0x200000)),
     _file_data(get_file_path(pid)),
-    _virtual_memory_size(),
-    _uid(),
+    _virtual_memory_size_in_bytes(get_process_virtual_memory_size(pid)),
+    _uid(get_process_uid(pid)),
     _open_fds_count()
-{
-    //std::cout << StringUtils::read_from_file("/bad/path", 10) << '\n';
-}
+{}
 
 std::string Process::Serialize() const
 {
@@ -29,12 +27,19 @@ std::string Process::Serialize() const
         ") file path (" + std::string(_file_data.path) +
         ") file name (" + _file_data.file_name +
         ") file size " + std::to_string(_file_data.size) +
-        " file inode " + std::to_string(_file_data.inode);
+        " file inode " + std::to_string(_file_data.inode) +
+        " vsize " + std::to_string(_virtual_memory_size_in_bytes) +
+        " uid " + std::to_string(_uid);
 }
 
 std::filesystem::path Process::get_process_stat_file_path(uint16_t process_id)
 {
     return std::filesystem::path("/proc") / std::to_string(process_id) / "stat";
+}
+
+std::filesystem::path Process::get_process_status_file_path(uint16_t process_id)
+{
+    return std::filesystem::path("/proc") / std::to_string(process_id) / "status";
 }
 
 std::filesystem::path Process::get_process_cmdline_file_path(uint16_t process_id)
@@ -55,13 +60,26 @@ uint16_t Process::get_parent_id(uint16_t process_id)
     {
         std::string file_data = StringUtils::read_from_file(process_stat_file_path, 0xFFFF);
         std::vector<std::string> process_stat = StringUtils::SplitString(file_data, ' ');
-        assert(process_stat.size() >= 4);
 
-        // index 3 is the location of pid in file - see man proc
+        // index 3 is the location of parent pid in file - see man proc
+        assert(process_stat.size() >= 4);
         std::string ppid(process_stat.at(3));
         return static_cast<uint16_t>(std::stoi(ppid));
     }
     return 0; // marker for invalid pid
+}
+
+uint64_t Process::get_process_virtual_memory_size(uint16_t process_id)
+{
+    // TODO (ASK): remove dup
+    const std::filesystem::path process_stat_file_path(get_process_stat_file_path(process_id));
+    std::string file_data = StringUtils::read_from_file(process_stat_file_path, 0xFFFF);
+    std::vector<std::string> process_stat = StringUtils::SplitString(file_data, ' ');
+
+    // index 22 is the location of virtual mem size in file - see man proc
+    assert(process_stat.size() >= 23);
+    std::string vsize(process_stat.at(22));
+    return static_cast<uint64_t>(std::stol(vsize));
 }
 
 std::filesystem::path Process::get_file_path(uint16_t process_id)
@@ -85,5 +103,19 @@ std::filesystem::path Process::get_file_path(uint16_t process_id)
         }
     }
     return "";
+}
+
+uint32_t Process::get_process_uid(uint16_t process_id)
+{
+    std::string file_data = StringUtils::read_from_file(get_process_status_file_path(process_id), 0xFFFF);
+    std::vector<std::string> process_status = StringUtils::SplitString(file_data, '\n');
+
+    // index 8 is the location of UID info in file - see man proc
+    assert(process_status.size() >= 9);
+    std::vector<std::string> uid_info = StringUtils::SplitString(process_status.at(8), '\t');
+
+    // index 1 in the line is the REAL UID of the process - see man proc
+    assert(uid_info.size() >= 2);
+    return std::stoi(uid_info.at(1));
 }
 
