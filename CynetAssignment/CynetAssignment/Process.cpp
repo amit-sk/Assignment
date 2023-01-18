@@ -1,5 +1,6 @@
 #include <fstream>
 #include <cassert>
+#include <cerrno>
 
 #include <iostream> // TODO (ASK) remove
 
@@ -12,7 +13,7 @@ Process::Process(uint16_t pid) :
     _grandparent_id(get_parent_id(_parent_id)),
     _command_line(StringUtils::read_from_file(get_process_cmdline_file_path(pid), 0x200000)),
     _file_name(),
-    _file_path(),
+    _file_path(get_file_path(pid)),
     _file_size(),
     _file_inode(),
     _virtual_memory_size(),
@@ -27,7 +28,8 @@ std::string Process::Serialize() const
     return "PID " + std::to_string(_id) +
         " PPID " + std::to_string(_parent_id) +
         " PPPID " + std::to_string(_grandparent_id) +
-        " cmdline: " + _command_line;
+        " cmdline: " + _command_line +
+        " file path " + std::string(_file_path);
 }
 
 std::filesystem::path Process::get_process_stat_file_path(uint16_t process_id)
@@ -40,9 +42,14 @@ std::filesystem::path Process::get_process_cmdline_file_path(uint16_t process_id
     return std::filesystem::path("/proc") / std::to_string(process_id) / "cmdline";
 }
 
+std::filesystem::path Process::get_process_exe_file_path(uint16_t process_id)
+{
+    return std::filesystem::path("/proc") / std::to_string(process_id) / "exe";
+}
+
 uint16_t Process::get_parent_id(uint16_t process_id)
 {
-    std::filesystem::path process_stat_file_path(get_process_stat_file_path(process_id));
+    const std::filesystem::path process_stat_file_path(get_process_stat_file_path(process_id));
 
     if (std::filesystem::exists(process_stat_file_path))
     {
@@ -55,5 +62,28 @@ uint16_t Process::get_parent_id(uint16_t process_id)
         return static_cast<uint16_t>(std::stoi(ppid));
     }
     return 0; // marker for invalid pid
+}
+
+std::filesystem::path Process::get_file_path(uint16_t process_id)
+{
+    const std::filesystem::path exe_file_path = get_process_exe_file_path(process_id);
+    if (std::filesystem::is_symlink(exe_file_path))
+    {
+        try
+        {
+            return std::filesystem::read_symlink(exe_file_path);
+        }
+        catch (const std::filesystem::filesystem_error& e)
+        {
+            if (e.code().value() == ENOENT)
+            {
+                // The exe file is a symlink to a non-existing file in case of kernel thread processes -
+                // which truely don't have exe files on the filesystem.
+                return "";
+            }
+            throw;
+        }
+    }
+    return "";
 }
 

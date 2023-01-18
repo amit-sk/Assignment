@@ -20,9 +20,10 @@ private:
     // /proc/[pid]/stat or status for ppid (pppid can be obtained from parent file), vsize\VmSize (virtual mem size), uid
     static std::filesystem::path get_process_stat_file_path(uint16_t process_id);
     static std::filesystem::path get_process_cmdline_file_path(uint16_t process_id);
+    static std::filesystem::path get_process_exe_file_path(uint16_t process_id);
 
     static uint16_t get_parent_id(uint16_t process_id);
-    static uint16_t get_grandparent_id(uint16_t parent_id);
+    static std::filesystem::path get_file_path(uint16_t parent_id);
 
 private:
     uint16_t _id;
