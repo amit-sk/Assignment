@@ -11,10 +11,9 @@ int main()
 {
     State::initialize();
 
-    auto shutdown_cb = std::make_shared<ShutdownCallback>(static_cast<uint32_t>(SIGINT));
-    SignalHandler signal_handler{ {
-            shutdown_cb,
-    } };
+    auto ctrl_c_cb = std::make_shared<ShutdownCallback>(static_cast<uint32_t>(SIGINT));
+    auto pkill_cb = std::make_shared<ShutdownCallback>(static_cast<uint32_t>(SIGTERM));
+    SignalHandler signal_handler{ { ctrl_c_cb, pkill_cb } };
     ProcManager process_manager;
 
     std::thread proc_manager_thread(&ProcManager::run, &process_manager);
