@@ -5,29 +5,23 @@
 #include "State.hpp"
 #include "SignalHandler.hpp"
 #include "ProcManager.hpp"
+#include "ShutdownCallback.hpp"
 
 int main()
 {
+    State::initialize();
+
+    auto shutdown_cb = std::make_shared<ShutdownCallback>(static_cast<uint32_t>(SIGINT));
     SignalHandler signal_handler{ {
-        {SIGINT, []() { std::cout << "on ctrl c" << '\n'; }},
+            shutdown_cb,
     } };
     ProcManager process_manager;
-
-    //std::signal(SIGINT, [](int signal) { State::turn_off(); });
-    //std::signal(SIGTERM, [](int signal) { State::turn_off(); });
 
     std::thread proc_manager_thread(&ProcManager::run, &process_manager);
 
     signal_handler.ListenForSignalsAndHandle();
 
-    //std::string i;
-    //std::cin >> i;
-
-    //std::raise(SIGINT);
-    //std::cout << std::boolalpha << (g_should_proc_manager_run) << '\n';
-
     std::cout << "Done" << '\n';
-    //process_manager.turn_off();
     proc_manager_thread.join();
     return 0;
 }

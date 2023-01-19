@@ -1,53 +1,62 @@
 #include <iostream> // TODO (ASK)
+#include <cassert>
+#include <stdexcept>
 #include "SignalHandler.hpp"
 
-SignalHandler::SignalHandler(std::map<uint8_t, std::function<void(void)>> handlers) :
-    _handlers(std::move(handlers)),
-    _wait_set(get_signals_set(get_signal_nums(handlers)))
+SignalHandler::SignalHandler(std::vector<std::shared_ptr<SignalCallback>> callbacks) :
+    _callbacks(std::move(callbacks)),
+    _wait_set(get_signals_set(get_signal_nums(_callbacks)))
 {
     RegisterRequiredSignals();
 }
 
-std::vector<uint8_t> SignalHandler::get_signal_nums(const std::map<uint8_t, std::function<void(void)>>& handlers)
+std::vector<uint32_t> SignalHandler::get_signal_nums(const std::vector<std::shared_ptr<SignalCallback>>& callbacks)
 {
-    std::vector<uint8_t> signals;
-    for (const auto&[sig, _] : handlers)
+    std::vector<uint32_t> signals;
+    for (const auto& callback : callbacks)
     {
-        signals.push_back(sig);
+        signals.push_back(callback->get_signal());
     }
     return signals;
 }
 
-sigset_t SignalHandler::get_signals_set(const std::vector<uint8_t>& signals)
+sigset_t SignalHandler::get_signals_set(const std::vector<uint32_t>& signals)
 {
     sigset_t sigset;
-    sigemptyset(&sigset);
+    assert(0 == sigemptyset(&sigset));
 
-    for (const uint8_t signal : signals)
+    for (const uint32_t signal : signals)
     {
-        sigaddset(&sigset, signal);
+        assert(0 == sigaddset(&sigset, signal));
     }
     return sigset;
 }
 
 void SignalHandler::RegisterRequiredSignals()
 {
-    pthread_sigmask(SIG_SETMASK, &_wait_set, NULL);
+    assert(0 == pthread_sigmask(SIG_SETMASK, &_wait_set, NULL));
 }
 
 void SignalHandler::ListenForSignalsAndHandle()
 {
     siginfo_t siginfo{ 0 };
     int sig_no = 0;
-    while (true)
+
+    sig_no = sigwaitinfo(&_wait_set, &siginfo);
+    if (sig_no > 0)
     {
-        sig_no = sigwaitinfo(&_wait_set, &siginfo);
-        if (sig_no > 0)
+        std::cout << "signal received " << std::to_string(sig_no) << '\n';
+        for (const auto& callback : _callbacks)
         {
-            // callback
-            std::cout << "signal received " << std::to_string(sig_no) << '\n';
-            _handlers.at(sig_no)();
+            if (callback->get_signal() == sig_no)
+            {
+                callback->OnSignal();
+            }
         }
+    }
+    else
+    {
+        throw std::runtime_error("sigwaitinfo");
     }
 }
 

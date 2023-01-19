@@ -77,16 +77,20 @@
   <ItemGroup>
     <ClCompile Include="File.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ShutdownCallback.cpp" />
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="ProcManager.cpp" />
+    <ClCompile Include="SignalCallback.cpp" />
     <ClCompile Include="SignalHandler.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="StringUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="File.hpp" />
+    <ClInclude Include="ShutdownCallback.hpp" />
     <ClInclude Include="Process.hpp" />
     <ClInclude Include="ProcManager.hpp" />
+    <ClInclude Include="SignalCallback.hpp" />
     <ClInclude Include="SignalHandler.hpp" />
     <ClInclude Include="State.hpp" />
     <ClInclude Include="StringUtils.hpp" />
